@@ -8,6 +8,10 @@ ISI's Optical Character Recognition (OCR) software for machine-print and handwri
 
 [*"Combining Deep Learning and Language Modeling for Segmentation-free OCR From Raw Pixels"*](https://doi.org/10.1109/ASAR.2017.8067772). Stephen Rawls, Huaigu Cao, Ekraam Sabir, Prem Natarajan. IEEE Workshop on Arabic Script Analysis and Recognition (ASAR) 2017.
 
+# Model
+
+![FlexOCR Model Diagram](https://github.com/isi-vista/FlexOCR/blob/master/flex-ocr-model-diagram.png)
+
 # Citation
 ```
 @inproceedings{flexocr,

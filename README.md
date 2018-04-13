@@ -12,6 +12,22 @@ ISI's Optical Character Recognition (OCR) software for machine-print and handwri
 
 ![FlexOCR Model Diagram](https://github.com/isi-vista/FlexOCR/blob/master/flex-ocr-model-diagram.png)
 
+# Pretrained Models
+
+Coming Soon. Pre-trained models for English, French, and Arabic Handwriting
+
+# Performance Numbers
+
+Coming soon. Expected character and word error rates from public datasets.
+
+# How to Train
+
+Coming soon.
+
+# How to Decode using Existing Model
+
+Coming soon.
+
 # Citation
 ```
 @inproceedings{flexocr,

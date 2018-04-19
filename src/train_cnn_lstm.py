@@ -31,8 +31,6 @@ def test_on_val(val_dataloader, model, criterion):
     start_val = time.time()
     cer_running_avg = 0
     wer_running_avg = 0
-    cer_lm_running_avg = 0
-    wer_lm_running_avg = 0
     loss_running_avg = 0
     n_samples = 0
 
@@ -53,8 +51,6 @@ def test_on_val(val_dataloader, model, criterion):
         loss = criterion(model_output, target, model_output_actual_lengths, target_widths)
 
         hyp_transcriptions = model.decode_without_lm(model_output, model_output_actual_lengths, uxxxx=True)
-        hyp_transcriptions_lm = hyp_transcriptions
-        # hyp_transcriptions_lm = model.decode_with_lm(model_output, model_output_actual_lengths, uxxxx=True)
 
         batch_size = input_tensor.size(0)
         curr_loss = loss.data[0] / batch_size
@@ -64,8 +60,6 @@ def test_on_val(val_dataloader, model, criterion):
         cur_target_offset = 0
         batch_cer = 0
         batch_wer = 0
-        batch_cer_lm = 0
-        batch_wer_lm = 0
         target_np = target.data.numpy()
         ref_transcriptions = []
         for i in range(len(hyp_transcriptions)):
@@ -80,15 +74,8 @@ def test_on_val(val_dataloader, model, criterion):
             batch_cer += cer
             batch_wer += wer
 
-            cer_lm, wer_lm = compute_cer_wer(hyp_transcriptions_lm[i], ref_transcription)
-            batch_cer_lm += cer_lm
-            batch_wer_lm += wer_lm
-
         cer_running_avg += (batch_cer / batch_size - cer_running_avg) / n_samples
         wer_running_avg += (batch_wer / batch_size - wer_running_avg) / n_samples
-
-        cer_lm_running_avg += (batch_cer_lm / batch_size - cer_lm_running_avg) / n_samples
-        wer_lm_running_avg += (batch_wer_lm / batch_size - wer_lm_running_avg) / n_samples
 
         # For now let's display one set of transcriptions every test, just to see improvements
         if display_hyp:
@@ -96,14 +83,10 @@ def test_on_val(val_dataloader, model, criterion):
             logger.info("Sample hypothesis / reference transcripts")
             logger.info("Error rate for this batch is:\tNo LM CER: %f\tWER:%f" % (
             batch_cer / batch_size, batch_wer / batch_size))
-            logger.info("\t\tWith LM CER: %f\tWER: %f" % (batch_cer_lm / batch_size, batch_wer_lm / batch_size))
-            logger.info("")
+
             hyp_transcriptions = model.decode_without_lm(model_output, model_output_actual_lengths, uxxxx=False)
-            # hyp_transcriptions_lm = model.decode_with_lm(model_output, model_output_actual_lengths, uxxxx=False)
-            hyp_transcriptions_lm = hyp_transcriptions
             for i in range(len(hyp_transcriptions)):
                 logger.info("\tHyp[%d]: %s" % (i, hyp_transcriptions[i]))
-                logger.info("\tHyp-LM[%d]: %s" % (i, hyp_transcriptions_lm[i]))
                 logger.info("\tRef[%d]: %s" % (i, ref_transcriptions[i]))
                 logger.info("")
             logger.info("--------------------")
@@ -113,7 +96,7 @@ def test_on_val(val_dataloader, model, criterion):
     model.train()
     end_val = time.time()
     logger.info("Total val time: %s" % (end_val - start_val))
-    return loss_running_avg, cer_running_avg, wer_running_avg, cer_lm_running_avg, wer_lm_running_avg
+    return loss_running_avg, cer_running_avg, wer_running_avg
 
 
 def train(batch, model, criterion, optimizer):
@@ -210,7 +193,7 @@ def main():
     ctc_loss = CTCLoss().cuda()
 
     iteration = 0
-    best_val_wer_lm = float('inf')
+    best_val_wer = float('inf')
 
     optimizer = torch.optim.Adam(model.parameters(), lr=lr_alpha)
 
@@ -247,7 +230,7 @@ def main():
 
             if iteration % snapshot_every_n_iterations == 0:
                 logger.info("Testing on validation set")
-                val_loss, val_cer, val_wer, val_cer_lm, val_wer_lm = test_on_val(validation_dataloader, model, ctc_loss)
+                val_loss, val_cer, val_wer = test_on_val(validation_dataloader, model, ctc_loss)
                 # Reduce learning rate on plateau
                 early_exit = False
                 lowered_lr = False
@@ -261,7 +244,6 @@ def main():
                     lr_alpha = max(lr_alpha * scheduler.factor, scheduler.min_lr)
 
                 logger.info("Val Loss: %f\tNo LM Val CER: %f\tNo LM Val WER: %f" % (val_loss, val_cer, val_wer))
-                logger.info("\t\tWith LM Val CER: %f\tWith LM Val WER: %f" % (val_cer_lm, val_wer_lm))
 
                 torch.save({'iteration': iteration,
                             'state_dict': model.state_dict(),
@@ -271,8 +253,8 @@ def main():
                             'val_loss': val_loss,
                             'val_cer': val_cer,
                             'val_wer': val_wer,
-                            'val_cer_lm': val_cer_lm,
-                            'val_wer_lm': val_wer_lm},
+                            'line_height': args.line_height
+                        },
                            snapshot_path)
 
                 # plotting lr_change on wer, cer and loss.
@@ -280,9 +262,9 @@ def main():
                 cer_array.append(val_cer)
                 iteration_points.append(iteration / snapshot_every_n_iterations)
 
-                if val_wer_lm < best_val_wer_lm:
+                if val_wer < best_val_wer:
                     logger.info("Best model so far, copying snapshot to best model file")
-                    best_val_wer_lm = val_wer_lm
+                    best_val_wer = val_wer_lm
                     shutil.copyfile(snapshot_path, best_model_path)
 
                 logger.info("Running WER: %s" % str(wer_array))

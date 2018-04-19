@@ -147,7 +147,7 @@ class OcrDataset(Dataset):
 
         transcription = []
         for char in entry['trans'].split(" "):
-            transcription.append(self.alphabet.char_to_idx[char.lower()])
+            transcription.append(self.alphabet.char_to_idx[char])
 
         metadata = {
             'utt-id': entry['id'],

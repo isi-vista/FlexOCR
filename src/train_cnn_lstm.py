@@ -264,7 +264,7 @@ def main():
 
                 if val_wer < best_val_wer:
                     logger.info("Best model so far, copying snapshot to best model file")
-                    best_val_wer = val_wer_lm
+                    best_val_wer = val_wer
                     shutil.copyfile(snapshot_path, best_model_path)
 
                 logger.info("Running WER: %s" % str(wer_array))

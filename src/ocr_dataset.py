@@ -10,6 +10,8 @@ import torch
 logger = logging.getLogger('root')
 
 from torch.utils.data import Dataset
+from alphabet import Alphabet
+
 
 class OcrDataset(Dataset):
     def __init__(self, data_dir, split, line_height, transforms, alphabet=None):
@@ -86,10 +88,7 @@ class OcrDataset(Dataset):
 
 
         # Now add CTC blank as first letter in alphabet. Also sort alphabet lexigraphically for convinience
-        idx_to_char = ['<ctc-blank>', *sorted(unique_chars)]
-
-        # Finally set alphabet to dictionary mapping characters to indexes
-        self.alphabet = dict(zip(idx_to_char, range(len(idx_to_char))))
+        self.alphabet = Alphabet(['<ctc-blank>', *sorted(unique_chars)])
 
     def determine_width_cutoffs(self):
 
@@ -148,7 +147,7 @@ class OcrDataset(Dataset):
 
         transcription = []
         for char in entry['trans'].split(" "):
-            transcription.append(self.alphabet.alphabet_to_idx[char.lower()])
+            transcription.append(self.alphabet.char_to_idx[char.lower()])
 
         metadata = {
             'utt-id': entry['id'],

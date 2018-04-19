@@ -139,7 +139,7 @@ def compute_cer_wer(hyp_transcription, ref_transcription):
 
 
 def form_target_transcription(target, alphabet):
-    return ' '.join([alphabet[i] for i in target])
+    return ' '.join([alphabet.idx_to_char[i] for i in target])
 
 
 def pretty_print_timespan(ts):

@@ -12,11 +12,6 @@ from torch.autograd import Variable
 
 from textutils import uxxxx_to_utf8
 
-sys.path.append("..")
-
-from english import EnglishAlphabet
-from french import FrenchAlphabet
-
 from torch.nn.utils.rnn import pack_padded_sequence as rnn_pack
 from torch.nn.utils.rnn import pad_packed_sequence as rnn_unpack
 
@@ -51,7 +46,6 @@ class CnnOcrModel(nn.Module):
             logger.info("\tModel Hyperparams = %s" % str(weights['model_hyper_params']))
             logger.info("")
 
-        # Need to change instantiate alphabet class
         hp = weights['model_hyper_params']
 
         # Need to over-ride GPU parameter
@@ -396,7 +390,8 @@ class CnnOcrModel(nn.Module):
                     prev_char[b] = ''
                     continue
 
-                char = self.alphabet[argmax_idxs[b]]
+
+                char = self.alphabet.idx_to_char[argmax_idxs[b]]
 
                 if prev_char[b] == char:
                     continue

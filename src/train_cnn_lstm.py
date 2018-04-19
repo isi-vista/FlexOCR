@@ -18,18 +18,12 @@ import datetime
 import time
 import shutil
 
-from madcat import MadcatDataset
-from iam import IAMDataset
-from rimes import RimesDataset
+from ocr_dataset import OcrDataset
 from datautils import GroupedSampler, SortByWidthCollater
 from models.cnnlstm import CnnOcrModel
 from textutils import *
 import argparse
 
-
-from english import EnglishAlphabet
-
-from sklearn.metrics import roc_auc_score
 
 from lr_scheduler import ReduceLROnPlateau
 
@@ -181,7 +175,7 @@ def main():
 
 
     # Setup cudnn benchmarks for faster code
-    torch.backends.cudnn.benchmark = True
+    torch.backends.cudnn.benchmark = False
 
     train_dataset = OcrDataset(args.datadir, "train", args.line_height, line_img_transforms)
     validation_dataset = OcrDataset(args.datadir, "validation", args.line_height, line_img_transforms)
@@ -207,7 +201,7 @@ def main():
             num_lstm_layers=args.num_lstm_layers,
             num_lstm_hidden_units=args.num_lstm_units,
             p_lstm_dropout=0.5,
-            alphabet=train_dataset.idx_to_char,
+            alphabet=train_dataset.alphabet,
             multigpu=True)
 
     # Set training mode on all sub-modules

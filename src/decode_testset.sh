@@ -2,49 +2,70 @@
 
 source ~/.bashrc
 
-# get datapath from argv
-model_path=/nfs/isicvlnas01/users/srawls/ocr-dev/tmp-fake-model-best_model.pth
-datadir=/nfs/isicvlnas01/users/srawls/ocr-dev/data/iam
-lmpath=/nfs/isicvlnas01/users/jmathai/experiments/iam_lm_augment_more_data/IAM-LM/
+if [ $# -ne 2 ] && [ $# -ne 3 ]; then
+    echo "USAGE:  ./decode_testset.sh <model-path> <data-path>  [<lm-path>]"
+    exit 1
+fi
+
+
+model_path=$1
+datadir=$2
+
+if [ $# -eq 3 ]; then
+    lmpath=$3
+else
+    lmpath=
+fi
+
+#model_path=/nfs/isicvlnas01/users/srawls/ocr-dev/tmp-fake-model-best_model.pth
+#datadir=/nfs/isicvlnas01/users/srawls/ocr-dev/data/iam
+#lmpath=/nfs/isicvlnas01/users/jmathai/experiments/iam_lm_augment_more_data/IAM-LM/
+
+
 export PYTHONPATH=/nas/home/srawls/ocr/PyTorchOCR/eesen/:$PYTHONPATH
 
-#cd $TMPDIR
-#tar xf ${data_path}
 
+OUTDIR=./hyp-output
+mkdir -p ${OUTDIR}
+
+
+SCLITE=/nfs/isicvlnas01/share/sclite/sclite
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Run Decoding
-python ~/ocr/FlexOCR/src/decode_testset.py --datadir=${datadir}\
-                         --model-path=${model_path} \
-                         --lm-path=${lmpath}
+echo python ${script_dir}/decode_testset.py --datadir=${datadir} --model-path=${model_path} --lm-path=${lmpath} --outdir=${OUTDIR}
+python ${script_dir}/decode_testset.py --datadir=${datadir} --model-path=${model_path} --lm-path=${lmpath} --outdir=${OUTDIR}
 
 if [[ $? -ne 0 ]]; then
+    echo "Error in decoding"
     exit 1
 fi
 
 
 # Turn decoding output into tokenized words
-python ~/ocr/FlexOCR/src/chars_to_tokenized_words.py $TMPDIR/hyp-chars.txt $TMPDIR/hyp-words.txt
-python ~/ocr/FlexOCR/src/chars_to_tokenized_words.py $TMPDIR/hyp-lm-chars.txt $TMPDIR/hyp-lm-words.txt
-python /nas/home/srawls/ocr/PyTorchOCR/chars_to_tokenized_words.py $TMPDIR/ref-chars.txt $TMPDIR/ref-words.txt
+python ${script_dir}/chars_to_tokenized_words.py $OUTDIR/hyp-chars.txt $OUTDIR/hyp-words.txt
+python ${script_dir}/chars_to_tokenized_words.py $OUTDIR/hyp-lm-chars.txt $OUTDIR/hyp-lm-words.txt
+python ${script_dir}/chars_to_tokenized_words.py $OUTDIR/ref-chars.txt $OUTDIR/ref-words.txt
 
 
 # Do CER measurement
-/nfs/isicvlnas01/share/sclite/sclite -r $TMPDIR/ref-chars.txt -h $TMPDIR/hyp-chars.txt -i swb -o all
-/nfs/isicvlnas01/share/sclite/sclite -r $TMPDIR/ref-chars.txt -h $TMPDIR/hyp-lm-chars.txt -i swb -o all
+${SCLITE} -r $OUTDIR/ref-chars.txt -h $OUTDIR/hyp-chars.txt -i swb -o all >/dev/null
+${SCLITE} -r $OUTDIR/ref-chars.txt -h $OUTDIR/hyp-lm-chars.txt -i swb -o all >/dev/null
 
 # Do WER measurement
-/nfs/isicvlnas01/share/sclite/sclite -r $TMPDIR/ref-words.txt -h $TMPDIR/hyp-words.txt -i swb -o all
-/nfs/isicvlnas01/share/sclite/sclite -r $TMPDIR/ref-words.txt -h $TMPDIR/hyp-lm-words.txt -i swb -o all
+${SCLITE} -r $OUTDIR/ref-words.txt -h $OUTDIR/hyp-words.txt -i swb -o all >/dev/null
+${SCLITE} -r $OUTDIR/ref-words.txt -h $OUTDIR/hyp-lm-words.txt -i swb -o all >/dev/null
 
 
 # Now display results
+# TODO -- prettier printing / display
 echo "No LM CER:"
-grep 'Sum/Avg' $TMPDIR/hyp-chars.txt.sys
+grep 'Sum/Avg' $OUTDIR/hyp-chars.txt.sys
 echo "LM CER:"
-grep 'Sum/Avg' $TMPDIR/hyp-lm-chars.txt.sys
+grep 'Sum/Avg' $OUTDIR/hyp-lm-chars.txt.sys
 
 echo "No LM WER:"
-grep 'Sum/Avg' $TMPDIR/hyp-words.txt.sys
+grep 'Sum/Avg' $OUTDIR/hyp-words.txt.sys
 echo "LM WER:"
-grep 'Sum/Avg' $TMPDIR/hyp-lm-words.txt.sys
+grep 'Sum/Avg' $OUTDIR/hyp-lm-words.txt.sys
 

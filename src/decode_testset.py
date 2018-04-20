@@ -18,6 +18,7 @@ def get_args():
     parser.add_argument("--batch-size", type=int, default=64, help="SGD mini-batch size")
 
     parser.add_argument("--datadir", type=str, required=True, help="specify the location to data.")
+    parser.add_argument("--outdir", type=str, required=True, help="specify the location to write output.")
 
     parser.add_argument("--num_data_threads", type=int, default=8, help="Number of background worker threads preparing/fetching data")
 
@@ -43,7 +44,9 @@ def main():
     ])
 
 
-    if args.lm_path is not None:
+    have_lm = (args.lm_path is not None) and (args.lm_path != "")
+
+    if have_lm:
         lm_units = os.path.join(args.lm_path, 'units.txt')
         lm_words = os.path.join(args.lm_path, 'words.txt')
         lm_wfst = os.path.join(args.lm_path, 'TLG.fst')
@@ -56,7 +59,7 @@ def main():
     torch.cuda.manual_seed_all(7)
 
 
-    if args.lm_path is not None:
+    if have_lm:
         model.init_lm(lm_wfst, lm_words, lm_units, acoustic_weight=0.8)
 
 
@@ -93,7 +96,7 @@ def main():
         hyp_transcriptions = model.decode_without_lm(model_output, model_output_actual_lengths, uxxxx=True)
 
         # Optionally, do LM decoding
-        if args.lm_path is not None:
+        if have_lm:
             hyp_transcriptions_lm = model.decode_with_lm(model_output, model_output_actual_lengths, uxxxx=True)
 
 
@@ -112,10 +115,11 @@ def main():
             ref_output.append((metadata['utt-ids'][i], ref_transcription))
 
 
-    hyp_out_file = os.path.join(os.environ["TMPDIR"], "hyp-chars.txt")
-    hyp_lm_out_file = os.path.join(os.environ["TMPDIR"], "hyp-lm-chars.txt")
-    ref_out_file = os.path.join(os.environ["TMPDIR"], "ref-chars.txt")
+    hyp_out_file = os.path.join(args.outdir, "hyp-chars.txt")
+    hyp_lm_out_file = os.path.join(args.outdir, "hyp-lm-chars.txt")
+    ref_out_file = os.path.join(args.outdir, "ref-chars.txt")
 
+    print("")
     print("Done. Now writing output files:")
     print("\t%s" % hyp_out_file)
     print("\t%s" % hyp_lm_out_file)

@@ -73,7 +73,7 @@ class OcrDataset(Dataset):
                 if ('height' in entry) and ('width' in entry):
                     width_orig, height_orig = entry['width'], entry['height']
                     normalized_height = 30
-                    normalized_width = width_orig * (normalized_width / height_orig)
+                    normalized_width = width_orig * (normalized_height / height_orig)
                 elif 'width' in entry:
                     normalized_width = entry['width']
                 else:

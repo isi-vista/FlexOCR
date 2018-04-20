@@ -17,6 +17,9 @@ class GroupedSampler():
 
     def __iter__(self):
         for g in self.size_group_keys:
+            if len(self.size_groups[g]) == 0:
+                continue
+
             if self.rand:
                 g_idx_iter = iter(torch.randperm(len(self.size_groups[g])).long())
             else:

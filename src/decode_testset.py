@@ -110,14 +110,18 @@ def main():
             cur_target_offset += target_widths.data[i]
 
             hyp_output.append((metadata['utt-ids'][i], hyp_transcriptions[i]))
-            hyp_lm_output.append((metadata['utt-ids'][i], hyp_transcriptions_lm[i]))
+
+            if have_lm:
+                hyp_lm_output.append((metadata['utt-ids'][i], hyp_transcriptions_lm[i]))
 
             ref_output.append((metadata['utt-ids'][i], ref_transcription))
 
 
     hyp_out_file = os.path.join(args.outdir, "hyp-chars.txt")
-    hyp_lm_out_file = os.path.join(args.outdir, "hyp-lm-chars.txt")
     ref_out_file = os.path.join(args.outdir, "ref-chars.txt")
+
+    if have_lm:
+        hyp_lm_out_file = os.path.join(args.outdir, "hyp-lm-chars.txt")
 
     print("")
     print("Done. Now writing output files:")

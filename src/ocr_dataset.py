@@ -70,7 +70,16 @@ class OcrDataset(Dataset):
 
             # Now figure out which size-group it belongs in
             for cur_limit in self.size_group_limits:
-                if entry['width'] < cur_limit:
+                if ('height' in entry) and ('width' in entry):
+                    width_orig, height_orig = entry['width'], entry['height']
+                    normalized_height = 30
+                    normalized_width = width_orig * (normalized_width / height_orig)
+                elif 'width' in entry:
+                    normalized_width = entry['width']
+                else:
+                    raise Exception("Json entry must list width & height of image.")
+
+                if normalized_width < cur_limit:
                     self.size_groups[cur_limit].append(idx)
                     self.size_groups_dict[cur_limit][idx] = 1
                     break

@@ -126,7 +126,10 @@ def main():
     print("")
     print("Done. Now writing output files:")
     print("\t%s" % hyp_out_file)
-    print("\t%s" % hyp_lm_out_file)
+
+    if have_lm:
+        print("\t%s" % hyp_lm_out_file)
+
     print("\t%s" % ref_out_file)
 
     with open(hyp_out_file, 'w') as fh:

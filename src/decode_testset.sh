@@ -33,7 +33,6 @@ SCLITE=/nfs/isicvlnas01/share/sclite/sclite
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Run Decoding
-echo python ${script_dir}/decode_testset.py --datadir=${datadir} --model-path=${model_path} --lm-path=${lmpath} --outdir=${OUTDIR}
 python ${script_dir}/decode_testset.py --datadir=${datadir} --model-path=${model_path} --lm-path=${lmpath} --outdir=${OUTDIR}
 
 if [[ $? -ne 0 ]]; then

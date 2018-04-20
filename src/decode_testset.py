@@ -136,9 +136,11 @@ def main():
         for uttid, hyp in hyp_output:
             fh.write("%s (%s)\n" % (hyp, uttid))
 
-    with open(hyp_lm_out_file, 'w') as fh:
-        for uttid, hyp in hyp_lm_output:
-            fh.write("%s (%s)\n" % (hyp, uttid))
+
+    if have_lm:
+        with open(hyp_lm_out_file, 'w') as fh:
+            for uttid, hyp in hyp_lm_output:
+                fh.write("%s (%s)\n" % (hyp, uttid))
 
     with open(ref_out_file, 'w') as fh:
         for uttid, ref in ref_output:

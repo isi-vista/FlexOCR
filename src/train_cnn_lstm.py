@@ -160,8 +160,8 @@ def main():
     # Setup cudnn benchmarks for faster code
     torch.backends.cudnn.benchmark = False
 
-    train_dataset = OcrDataset(args.datadir, "train", args.line_height, line_img_transforms)
-    validation_dataset = OcrDataset(args.datadir, "validation", args.line_height, line_img_transforms)
+    train_dataset = OcrDataset(args.datadir, "train", line_img_transforms)
+    validation_dataset = OcrDataset(args.datadir, "validation", line_img_transforms)
 
     train_dataloader = DataLoader(train_dataset, args.batch_size, num_workers=4, sampler=GroupedSampler(train_dataset, rand=True),
                                   collate_fn=SortByWidthCollater, pin_memory=True, drop_last=True)

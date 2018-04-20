@@ -265,7 +265,7 @@ class CnnOcrModel(nn.Module):
 
         return prob_output, Variable(torch.IntTensor(lstm_output_lengths))
 
-    def init_lm(self, lm_file, word_sym_file, acoustic_weight=0.8, max_active=5000, beam=16.0, lattice_beam=10.0):
+    def init_lm(self, lm_file, word_sym_file, lm_units, acoustic_weight=0.8, max_active=5000, beam=16.0, lattice_beam=10.0):
         # Only pull in if needed
         script_path = os.path.dirname(os.path.realpath(__file__))
         sys.path.append(script_path + "/../eesen")
@@ -274,12 +274,20 @@ class CnnOcrModel(nn.Module):
         self.lattice_decoder = eesen.LatticeDecoder(lm_file, word_sym_file, 1, max_active, beam,
                                                     lattice_beam)
 
+        # Need to keep track of model-alphabet to LM-alphabet conversion
+        units = ['<ctc-blank>']
+        with open(lm_units, 'r') as fh:
+            for line in fh:
+                units.append(line.strip().split(' ')[0])
+
+        self.lmidx_to_char = units
+
+        
+
     def decode_with_lm(self, model_output, batch_actual_timesteps, uxxxx=False, pmod=False):
 
         if self.lattice_decoder is None:
             raise Exception("Must initialize lattice decoder prior to LM decoding")
-
-        local_alphabet = self.alphabet
 
         T = model_output.size()[0]
         B = model_output.size()[1]
@@ -309,12 +317,12 @@ class CnnOcrModel(nn.Module):
 
 
             activations = probs[:, b, :].numpy()
-            activations_remapped = np.zeros((batch_actual_timesteps[b], len(local_alphabet.lmidx_to_alphabet)))
+            activations_remapped = np.zeros((batch_actual_timesteps[b], len(self.lmidx_to_char)))
 
-            for c in range(len(local_alphabet.lmidx_to_alphabet)):
-                char = local_alphabet.lmidx_to_alphabet[c]
-                if char in local_alphabet.alphabet_to_idx:
-                    mapped_c = local_alphabet.alphabet_to_idx[char]
+            for c in range(len(self.lmidx_to_char)):
+                char = self.lmidx_to_char[c]
+                if char in self.alphabet.char_to_idx:
+                    mapped_c = self.alphabet.char_to_idx[char]
                     activations_remapped[:, c] = activations[:batch_actual_timesteps[b], mapped_c]
                 else:
                     activations_remapped[:, c] = np.log(1e-10)
@@ -322,7 +330,7 @@ class CnnOcrModel(nn.Module):
             # Now check that anything turned to NULL gets mapped to ctc-blank
             for t in range(batch_actual_timesteps[b]):
                 psum = np.log(1e-10)
-                for c in range(len(local_alphabet.lmidx_to_alphabet)):
+                for c in range(len(self.lmidx_to_char)):
                     psum = np.logaddexp(psum, activations_remapped[t, c])
                 if psum < np.log(1e-2):
                     activations_remapped[t, 0] = 0

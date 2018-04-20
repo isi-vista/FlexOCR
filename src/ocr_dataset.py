@@ -14,7 +14,7 @@ from alphabet import Alphabet
 
 
 class OcrDataset(Dataset):
-    def __init__(self, data_dir, split, line_height, transforms, alphabet=None):
+    def __init__(self, data_dir, split, transforms, alphabet=None):
         logger.info("Loading OCR Dataset: [%s] split from [%s]." % (split, data_dir))
 
         self.data_dir = data_dir
